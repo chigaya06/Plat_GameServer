@@ -1,0 +1,27 @@
+var cluster = require('cluster');
+
+var debug = false;
+
+if (cluster.isMaster) {
+	cluster.on('fork', function(worker){
+		console.log('Game Room Server ' + worker.id + ' created');
+	});
+	
+	cluster.on('listening', function(worker, address){
+		console.log('Game Room Server ' + worker.id + ' is listening on ' + address.port);
+	});
+	
+	cluster.on('exit', function(worker, code, signal){
+		console.log('Game Room Server ' + worker.id + ' exited');
+		cluster.fork();
+	});
+	
+	cluster.setupMaster({exec: __dirname + '/../app_game.js'});
+	
+	var numCPUs = debug?1:require('os').cpus().length;
+
+	for(var i = 0; i < numCPUs; i++){
+		cluster.fork();
+	}
+}
+
